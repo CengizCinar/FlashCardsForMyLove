@@ -14,19 +14,19 @@ export default async (req) => {
       return new Response('Missing fields', { status: 400 })
     }
 
-    // Endpoint değerini benzersiz bir ID'ye çevirerek cihazları ayırıyoruz
-    const deviceId = btoa(subscription.endpoint).substring(0, 20)
+    // Aynı cihazın eski kaydını sil (varsa)
+    await supabase
+      .from('subscriptions')
+      .delete()
+      .eq('subscription_data->>endpoint', subscription.endpoint)
 
+    // Yeni kayıt ekle (UUID otomatik oluşur)
     const { error } = await supabase
       .from('subscriptions')
-      .upsert(
-        {
-          id: deviceId,
-          subscription_data: subscription,
-          notification_times: times
-        },
-        { onConflict: 'id' }
-      )
+      .insert({
+        subscription_data: subscription,
+        notification_times: times
+      })
 
     if (error) throw error
 
