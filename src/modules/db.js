@@ -1,4 +1,4 @@
-import Dexie from 'dexie'
+
 import { supabase } from './supabaseClient'
 
 // ── Veritabanı şeması ──────────────────────────────────────────────────────
