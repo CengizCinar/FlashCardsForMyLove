@@ -51,7 +51,9 @@ export default function SettingsView() {
       } else {
         showMsg('Hata: ' + err.message, 'red')
       }
-      await save({ notificationEnabled: false })
+      // Hata mesajını ezmeden sessizce kaydet
+      setSettings(s => ({ ...s, notificationEnabled: false }))
+      await saveSettings({ notificationEnabled: false })
     }
     setNotifLoading(false)
   }
