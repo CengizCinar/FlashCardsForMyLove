@@ -4,7 +4,7 @@ import { requestPermissionAndSubscribe, unsubscribePush, getCurrentSubscription,
 
 export default function SettingsView() {
   const [settings, setSettings] = useState(null)
-  const [newTime, setNewTime] = useState('08:00')
+
   const [msg, setMsg] = useState('')
   const [msgType, setMsgType] = useState('green')
   const [notifLoading, setNotifLoading] = useState(false)
@@ -58,11 +58,10 @@ export default function SettingsView() {
     setNotifLoading(false)
   }
 
-  const addTime = async () => {
+  const addTime = async (t) => {
     if (!settings) return
-    const times = [...new Set([...settings.notificationTimes, newTime])].sort()
+    const times = [...new Set([...settings.notificationTimes, t])].sort()
     await save({ notificationTimes: times })
-    // Bildirim açıksa sunucuyu güncelle
     if (settings.notificationEnabled && settings.pushSubscription) {
       await saveScheduleToServer(settings.pushSubscription, times).catch(() => { })
     }
@@ -134,26 +133,45 @@ export default function SettingsView() {
           </p>
         )}
 
-        <div className="time-chips" style={{ margin: '12px 0' }}>
-          {settings.notificationTimes.map(t => (
-            <div className="time-chip" key={t}>
-              <span>{t}</span>
-              <button onClick={() => removeTime(t)}>×</button>
-            </div>
-          ))}
-        </div>
+        <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 8, marginBottom: 8 }}>
+          Bildirim almak istediğin saatlere dokun:
+        </p>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            className="input"
-            type="time"
-            value={newTime}
-            onChange={e => setNewTime(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button className="btn btn-ghost" style={{ width: 'auto', padding: '13px 18px' }} onClick={addTime}>
-            + Ekle
-          </button>
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, margin: '8px 0'
+        }}>
+          {(() => {
+            const slots = []
+            for (let h = 9; h <= 23; h++) {
+              for (const m of ['00', '30']) {
+                if (h === 23 && m === '30') continue // 23:30 yok
+                slots.push(`${String(h).padStart(2, '0')}:${m}`)
+              }
+            }
+            return slots.map(t => {
+              const isSelected = settings.notificationTimes.includes(t)
+              return (
+                <button
+                  key={t}
+                  onClick={() => isSelected ? removeTime(t) : addTime(t)}
+                  style={{
+                    padding: '10px 4px',
+                    fontSize: 13,
+                    fontWeight: isSelected ? 600 : 400,
+                    borderRadius: 10,
+                    border: isSelected ? '2px solid var(--green, #2d8a4e)' : '1.5px solid #ddd',
+                    background: isSelected ? '#e6f4ec' : 'var(--paper, #fff)',
+                    color: isSelected ? 'var(--green, #2d8a4e)' : 'var(--ink-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {t}
+                </button>
+              )
+            })
+          })()
+          }
         </div>
       </div>
 
