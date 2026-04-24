@@ -52,7 +52,7 @@ export default async (req, context) => {
       try {
         await webpush.sendNotification(
           sub.subscription_data,
-          JSON.stringify({ title, body, url: '/' })
+          JSON.stringify({ title, body, url: '/', front: randomCard.front, back: randomCard.back, askFront })
         )
         sentCount++;
       } catch (err) {
