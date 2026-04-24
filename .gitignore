@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables - ASLA GitHub'a yükleme
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Mac
+.DS_Store
+
+# Netlify
+.netlify
