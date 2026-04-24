@@ -47,7 +47,7 @@ export default function SettingsView() {
       }
     } catch (err) {
       if (err.message.includes('izni')) {
-        showMsg('İzin verilmedi. iPhone Ayarları → Bildirimler → Kartlar → İzin Ver.', 'red')
+        showMsg('İzin verilmedi. iPhone Ayarları → Bildirimler → Woordenlijst → İzin Ver.', 'red')
       } else if (err.message.includes('VAPID')) {
         showMsg('Sunucu henüz yapılandırılmamış (VAPID key eksik).', 'red')
       } else {
@@ -139,7 +139,7 @@ export default function SettingsView() {
           />
         </div>
         <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>
-          Vadesi geçmiş kartların tümü gösterilir. Bu sayı yeni kart limitini belirler.
+          Vadesi geçmiş kelimelerin tümü gösterilir. Bu sayı yeni kelime limitini belirler.
         </p>
       </div>
 

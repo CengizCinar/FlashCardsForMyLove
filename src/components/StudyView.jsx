@@ -104,7 +104,7 @@ export default function StudyView({ dailyGoal = 20 }) {
     <div className="view">
       <div className="empty-state">
         <div className="empty-icon">⏳</div>
-        <p>Kartlar yükleniyor...</p>
+        <p>Kelimeler yükleniyor...</p>
       </div>
     </div>
   )
@@ -116,7 +116,7 @@ export default function StudyView({ dailyGoal = 20 }) {
         <h2>{sessionTotal === 0 ? 'Bugünlük tamamdır!' : 'Harika iş!'}</h2>
         <p>
           {sessionTotal === 0
-            ? 'Bugün çalışılacak kart yok.\nYeni kelimeler ekleyebilirsin.'
+            ? 'Bugün çalışılacak kelime yok.\nYeni kelimeler ekleyebilirsin.'
             : `${sessionHistory.filter(h => h.result !== 'wrong').length} / ${sessionHistory.length} doğru cevapladın.`}
         </p>
         <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={() => { setDone(false); setSessionHistory([]); loadQueue() }}>
@@ -142,7 +142,7 @@ export default function StudyView({ dailyGoal = 20 }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>
-          {queue.length} kart kaldı
+          {queue.length} kelime kaldı
         </span>
         <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>
           {progress}%

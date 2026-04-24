@@ -1,6 +1,6 @@
 // Push bildirim handler — Service Worker'a eklenir
 self.addEventListener('push', (event) => {
-    let data = { title: 'Kelime vakti! 📚', body: 'Bugünkü kartlarını çalışmak için dokun.', url: '/' }
+    let data = { title: 'Kelime vakti! 📚', body: 'Bugünkü kelimelerini çalışmak için dokun.', url: '/' }
     try { if (event.data) data = { ...data, ...event.data.json() } } catch { }
 
     event.waitUntil(

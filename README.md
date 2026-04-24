@@ -1,4 +1,4 @@
-# Kelime Kartları — Hollandaca / Türkçe Flashcard PWA
+# Woordenlijst — Hollandaca / Türkçe Flashcard PWA
 
 ## Yerel geliştirme
 ```bash
