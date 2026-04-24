@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // sw-push.js'i workbox'un yanına ekle
+      injectManifest: undefined,
+      strategies: 'generateSW',
       manifest: {
         name: 'Kelime Kartları',
         short_name: 'Kartlar',
@@ -22,7 +25,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Push handler'ı SW'ye dahil et
+        importScripts: ['/sw-push.js'],
+        runtimeCaching: []
       }
     })
   ]
