@@ -29,8 +29,8 @@ export default async (req, context) => {
   const shouldSend = data.times.some(t => {
     const [h, m] = t.split(':').map(Number)
     const targetMinutes = h * 60 + m
-    // UTC+1 ve UTC+2 için de kontrol et (Hollanda)
-    return [0, -60, -120].some(offset => {
+    // UTC, UTC+1 ve UTC+2 için kontrol et (Hollanda)
+    return [0, 60, 120].some(offset => {
       const adjusted = ((nowUTC + offset) % 1440 + 1440) % 1440
       return Math.abs(targetMinutes - adjusted) <= 16
     })
