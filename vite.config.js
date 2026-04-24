@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'Woordenlijst',
         short_name: 'Woordenlijst',
         description: 'Hollandaca / Türkçe kelime ezber uygulaması',
-        theme_color: '#f5ede0',
+        theme_color: '#232222ff',
         background_color: '#f5ede0',
         display: 'standalone',
         orientation: 'portrait',
