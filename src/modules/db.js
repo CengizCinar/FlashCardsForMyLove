@@ -1,4 +1,5 @@
 import Dexie from 'dexie'
+import { supabase } from './supabaseClient'
 
 // ── Veritabanı şeması ──────────────────────────────────────────────────────
 // cards tablosu: her kelime kartı bir kayıt
@@ -34,11 +35,18 @@ export async function saveSettings(patch) {
 
 // ── Kart CRUD ──────────────────────────────────────────────────────────────
 export async function addCard({ front, back, language = 'nl-tr' }) {
+  // 1. Supabase'e gönder
+  const { error } = await supabase
+    .from('cards')
+    .insert([{ front: front.trim(), back: back.trim(), language }])
+
+  if (error) console.error("Supabase'e kayıt hatası:", error)
+
+  // 2. Lokal veritabanına (Dexie) ekle (Mevcut kodun)
   return db.cards.add({
     front: front.trim(),
     back: back.trim(),
     language,
-    // SRS alanları
     nextReview: new Date().toISOString(),
     interval: 0,
     easeFactor: 2.5,
