@@ -1,10 +1,7 @@
-
+import Dexie from 'dexie'
 import { supabase } from './supabaseClient'
 
 // ── Veritabanı şeması ──────────────────────────────────────────────────────
-// cards tablosu: her kelime kartı bir kayıt
-// settings tablosu: tek bir satır (id=1), uygulama ayarları
-
 export const db = new Dexie('KelimeKartlari')
 
 db.version(1).stores({
@@ -42,7 +39,7 @@ export async function addCard({ front, back, language = 'nl-tr' }) {
 
   if (error) console.error("Supabase'e kayıt hatası:", error)
 
-  // 2. Lokal veritabanına (Dexie) ekle (Mevcut kodun)
+  // 2. Lokal veritabanına (Dexie) ekle
   return db.cards.add({
     front: front.trim(),
     back: back.trim(),
