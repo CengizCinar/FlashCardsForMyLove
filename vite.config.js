@@ -11,8 +11,8 @@ export default defineConfig({
       injectManifest: undefined,
       strategies: 'generateSW',
       manifest: {
-        name: 'Kelime Kartları',
-        short_name: 'Kartlar',
+        name: 'Woordenlijst',
+        short_name: 'Woordenlijst',
         description: 'Hollandaca / Türkçe kelime ezber uygulaması',
         theme_color: '#f5ede0',
         background_color: '#f5ede0',
