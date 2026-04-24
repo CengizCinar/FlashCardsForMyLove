@@ -182,8 +182,8 @@ export default function SettingsView() {
           {(() => {
             const slots = []
             for (let h = 9; h <= 23; h++) {
-              for (const m of ['00', '30']) {
-                if (h === 23 && m === '30') continue // 23:30 yok
+              for (const m of ['00', '15', '30', '45']) {
+                if (h === 23 && m !== '00' && m !== '15') continue
                 slots.push(`${String(h).padStart(2, '0')}:${m}`)
               }
             }

@@ -22,25 +22,42 @@ export default async (req, context) => {
   )
 
   try {
+    console.log('--- Push Job Started ---')
+    console.log('Checking VAPID keys...')
+    if (!process.env.VITE_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      console.error('VAPID keys are missing in environment variables!')
+    }
+
     // 1. Tüm abonelikleri al
     const { data: subs, error: subError } = await supabase.from('subscriptions').select('*')
-    if (subError || !subs || subs.length === 0) {
+    if (subError) {
+      console.error('Supabase subscription fetch error:', subError)
+      return new Response('No subscriptions found', { status: 200 })
+    }
+    if (!subs || subs.length === 0) {
+      console.log('No subscriptions found in DB.')
       return new Response('No subscriptions found', { status: 200 })
     }
 
     // 2. Supabase'den kelimeleri al
     const { data: cards, error: cardError } = await supabase.from('cards').select('*')
-    if (cardError || !cards || cards.length === 0) {
+    if (cardError) {
+      console.error('Supabase cards fetch error:', cardError)
+      return new Response('No cards found in Supabase', { status: 200 })
+    }
+    if (!cards || cards.length === 0) {
+      console.log('No cards found in DB.')
       return new Response('No cards found in Supabase', { status: 200 })
     }
 
     const nl = getNLTime()
+    console.log(`Current NL Time: ${nl.hours}:${String(nl.minutes).padStart(2,'0')}`)
     let sentCount = 0
     const skipped = []
 
     for (const sub of subs) {
       const times = sub.notification_times || []
-
+      
       // Hollanda saatine göre kontrol — ±7 dk pencere (15 dk cron için yeterli)
       const shouldSend = times.some(t => {
         const [h, m] = t.split(':').map(Number)
@@ -72,6 +89,7 @@ export default async (req, context) => {
       const body = askFront ? randomCard.front : randomCard.back
 
       try {
+        console.log(`Sending push to ${sub.id.slice(0,8)}...`)
         await webpush.sendNotification(
           sub.subscription_data,
           JSON.stringify({ title, body, url: '/', front: randomCard.front, back: randomCard.back, askFront })
@@ -79,18 +97,23 @@ export default async (req, context) => {
         // Son gönderim zamanını güncelle (kolon varsa)
         await supabase.from('subscriptions').update({ last_notified_at: new Date().toISOString() }).eq('id', sub.id).catch(() => {})
         sentCount++
+        console.log(`Successfully sent to ${sub.id.slice(0,8)}`)
       } catch (err) {
+        console.error(`Error sending push to ${sub.id.slice(0,8)}:`, err.message)
         if (err.statusCode === 410) {
+          console.log(`Subscription ${sub.id.slice(0,8)} is gone. Deleting from DB...`)
           await supabase.from('subscriptions').delete().eq('id', sub.id)
         }
       }
     }
 
-    return new Response(
-      `NL Time: ${nl.hours}:${String(nl.minutes).padStart(2,'0')} | Sent: ${sentCount} | Skipped: ${skipped.length}\n${skipped.join('\n')}`,
-      { status: 200 }
-    )
+    const finalMessage = `NL Time: ${nl.hours}:${String(nl.minutes).padStart(2,'0')} | Sent: ${sentCount} | Skipped: ${skipped.length}\n${skipped.join('\n')}`
+    console.log('--- Push Job Finished ---')
+    console.log(finalMessage)
+    
+    return new Response(finalMessage, { status: 200 })
   } catch (err) {
+    console.error('CRITICAL SERVER ERROR in send-push:', err)
     return new Response('Server error: ' + err.message, { status: 500 })
   }
 }
