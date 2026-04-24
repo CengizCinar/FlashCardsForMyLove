@@ -3,6 +3,17 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
 
+// Hollanda yerel saatini al (Europe/Amsterdam)
+function getNLTime() {
+  const now = new Date()
+  const nl = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Amsterdam',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(now)
+  const [h, m] = nl.split(':').map(Number)
+  return { hours: h, minutes: m, totalMinutes: h * 60 + m }
+}
+
 export default async (req, context) => {
   webpush.setVapidDetails(
     'mailto:' + (process.env.VAPID_EMAIL || 'admin@example.com'),
@@ -23,23 +34,34 @@ export default async (req, context) => {
       return new Response('No cards found in Supabase', { status: 200 })
     }
 
-    const now = new Date()
-    const nowUTC = now.getUTCHours() * 60 + now.getUTCMinutes()
-    let sentCount = 0;
+    const nl = getNLTime()
+    let sentCount = 0
+    const skipped = []
 
     for (const sub of subs) {
-      // Saat kontrolü (Mevcut mantık: UTC ve Hollanda saatleri)
       const times = sub.notification_times || []
+
+      // Hollanda saatine göre kontrol — ±7 dk pencere (15 dk cron için yeterli)
       const shouldSend = times.some(t => {
         const [h, m] = t.split(':').map(Number)
-        const targetMinutes = h * 60 + m
-        return [0, 60, 120].some(offset => {
-          const adjusted = ((nowUTC + offset) % 1440 + 1440) % 1440
-          return Math.abs(targetMinutes - adjusted) <= 16
-        })
+        const target = h * 60 + m
+        return Math.abs(nl.totalMinutes - target) <= 7
       })
 
-      if (!shouldSend) continue;
+      if (!shouldSend) {
+        skipped.push(`${sub.id.slice(0,8)}: NL=${nl.hours}:${String(nl.minutes).padStart(2,'0')}, targets=${times.join(',')}`)
+        continue
+      }
+
+      // Tekrar gönderme koruması: son 30 dk içinde gönderildiyse atla
+      if (sub.last_notified_at) {
+        const lastSent = new Date(sub.last_notified_at)
+        const diffMin = (Date.now() - lastSent.getTime()) / 60000
+        if (diffMin < 30) {
+          skipped.push(`${sub.id.slice(0,8)}: cooldown (${Math.round(diffMin)}m ago)`)
+          continue
+        }
+      }
 
       // Kartlar arasından rastgele birini seç
       const randomCard = cards[Math.floor(Math.random() * cards.length)]
@@ -54,19 +76,28 @@ export default async (req, context) => {
           sub.subscription_data,
           JSON.stringify({ title, body, url: '/', front: randomCard.front, back: randomCard.back, askFront })
         )
-        sentCount++;
+        // Son gönderim zamanını güncelle (kolon varsa)
+        await supabase.from('subscriptions').update({ last_notified_at: new Date().toISOString() }).eq('id', sub.id).catch(() => {})
+        sentCount++
       } catch (err) {
-        // Hata 410 ise (Gone), kullanıcı bildirimi kapatmış demektir. Aboneliği sil.
         if (err.statusCode === 410) {
           await supabase.from('subscriptions').delete().eq('id', sub.id)
         }
       }
     }
 
-    return new Response(`Push process complete. Sent: ${sentCount}`, { status: 200 })
+    return new Response(
+      `NL Time: ${nl.hours}:${String(nl.minutes).padStart(2,'0')} | Sent: ${sentCount} | Skipped: ${skipped.length}\n${skipped.join('\n')}`,
+      { status: 200 }
+    )
   } catch (err) {
     return new Response('Server error: ' + err.message, { status: 500 })
   }
 }
 
-export const config = { path: '/api/send-push' }
+// Netlify Scheduled Function: her 15 dakikada bir çalışır
+// Cron-job.org'a gerek kalmaz!
+export const config = {
+  path: '/api/send-push',
+  schedule: '*/15 * * * *'
+}
