@@ -115,6 +115,19 @@ function BulkImport() {
     setLoading(false)
   }
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setResult('')
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setText(ev.target.result)
+    }
+    reader.readAsText(file)
+    // Input'u sıfırla ki aynı dosya tekrar seçilebilsin
+    e.target.value = ''
+  }
+
   return (
     <>
       <textarea
@@ -130,14 +143,28 @@ function BulkImport() {
           {result}
         </p>
       )}
-      <button
-        className="btn btn-ghost"
-        style={{ marginTop: 8 }}
-        onClick={handleImport}
-        disabled={!text.trim() || loading}
-      >
-        {loading ? 'Ekleniyor...' : 'İçe aktar'}
-      </button>
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <label
+          className="btn btn-ghost"
+          style={{ flex: 1, cursor: 'pointer', textAlign: 'center' }}
+        >
+          📂 Dosya Seç
+          <input
+            type="file"
+            accept=".txt,.csv,.tsv"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
+        </label>
+        <button
+          className="btn btn-ghost"
+          style={{ flex: 1 }}
+          onClick={handleImport}
+          disabled={!text.trim() || loading}
+        >
+          {loading ? 'Ekleniyor...' : '↑ İçe aktar'}
+        </button>
+      </div>
     </>
   )
 }

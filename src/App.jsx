@@ -42,10 +42,63 @@ function IconSettings() {
   )
 }
 
+// Bildirimden gelen quiz modalı
+function QuizModal({ quiz, answer, dir, onClose }) {
+  const [revealed, setRevealed] = useState(false)
+  const question = dir === 'front' ? quiz : answer
+  const answerText = dir === 'front' ? answer : quiz
+  const label = dir === 'front' ? 'Bu kelimenin anlamı ne?' : 'Bunun Hollandacası ne?'
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 999,
+      background: 'rgba(0,0,0,0.5)', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', padding: 20
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--paper, #fff)', borderRadius: 20, padding: '32px 24px',
+        maxWidth: 360, width: '100%', textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+      }} onClick={e => e.stopPropagation()}>
+        <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 8 }}>{label}</p>
+        <h2 style={{ fontSize: 28, fontFamily: 'Lora, serif', marginBottom: 24, color: 'var(--ink)' }}>
+          {question}
+        </h2>
+
+        {revealed ? (
+          <div style={{
+            padding: '16px 20px', background: '#e6f4ec', borderRadius: 12,
+            fontSize: 22, fontWeight: 600, color: 'var(--green, #2d8a4e)', marginBottom: 20
+          }}>
+            {answerText}
+          </div>
+        ) : (
+          <button
+            className="btn btn-primary"
+            style={{ width: '100%', marginBottom: 20 }}
+            onClick={() => setRevealed(true)}
+          >
+            Cevabı Göster
+          </button>
+        )}
+
+        <button
+          className="btn btn-ghost"
+          style={{ width: '100%' }}
+          onClick={onClose}
+        >
+          Kapat
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [tab, setTab]         = useState('study')
   const [dueCount, setDueCount] = useState(0)
   const [dailyGoal, setDailyGoal] = useState(20)
+  const [quizData, setQuizData] = useState(null)
 
   useEffect(() => {
     const refresh = async () => {
@@ -58,6 +111,19 @@ export default function App() {
     return () => clearInterval(id)
   }, [])
 
+  // URL'den quiz parametrelerini kontrol et
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const quiz = params.get('quiz')
+    const answer = params.get('answer')
+    const dir = params.get('dir') || 'front'
+    if (quiz && answer) {
+      setQuizData({ quiz, answer, dir })
+      // URL'yi temizle (sayfa yenilemede tekrar açılmasın)
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
+
   const tabs = [
     { id: 'study',    label: 'Çalış',    Icon: IconStudy },
     { id: 'list',     label: 'Kelimeler',Icon: IconList },
@@ -67,6 +133,15 @@ export default function App() {
 
   return (
     <div className="app">
+      {quizData && (
+        <QuizModal
+          quiz={quizData.quiz}
+          answer={quizData.answer}
+          dir={quizData.dir}
+          onClose={() => setQuizData(null)}
+        />
+      )}
+
       {tab === 'study'    && <StudyView    dailyGoal={dailyGoal} />}
       {tab === 'list'     && <WordListView />}
       {tab === 'add'      && <AddWordView  onSave={() => setTab('list')} />}
