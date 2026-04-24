@@ -98,6 +98,5 @@ export default async (req, context) => {
 // Netlify Scheduled Function: her 15 dakikada bir çalışır
 // Cron-job.org'a gerek kalmaz!
 export const config = {
-  path: '/api/send-push',
   schedule: '*/15 * * * *'
 }
