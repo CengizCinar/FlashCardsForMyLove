@@ -237,9 +237,18 @@ export default function SettingsView() {
               Kopyala
             </button>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
-            Cihaz değiştirdiğinde bu kodu kullanarak kelimelerini geri getirebilirsin.
-          </p>
+          <div style={{ 
+            fontSize: 12, 
+            color: '#856404', 
+            marginTop: 8, 
+            padding: '10px 12px', 
+            background: '#fff3cd', 
+            border: '1px solid #ffeeba',
+            borderRadius: 8,
+            lineHeight: 1.5
+          }}>
+            <strong>⚠️ DİKKAT:</strong> Telefon değiştirirseniz veya uygulamayı silerseniz, eski kelimelerinizi geri getirebilmek için bu koda ihtiyacınız olacak. Lütfen kopyalayıp güvenli bir yere kaydedin (Notlar veya WhatsApp gibi).
+          </div>
         </div>
 
         <div style={{ padding: '12px', background: 'var(--cream)', borderRadius: 12 }}>
