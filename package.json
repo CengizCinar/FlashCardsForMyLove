@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.4",
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "web-push": "^3.6.7",
     "workbox-window": "^7.1.0"
   },
   "devDependencies": {
