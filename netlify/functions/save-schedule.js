@@ -8,7 +8,7 @@ export default async (req) => {
   }
 
   try {
-    const { subscription, times } = await req.json()
+    const { subscription, times, syncCode } = await req.json()
 
     if (!subscription || !times) {
       return new Response('Missing fields', { status: 400 })
@@ -25,7 +25,8 @@ export default async (req) => {
       .from('subscriptions')
       .insert({
         subscription_data: subscription,
-        notification_times: times
+        notification_times: times,
+        user_code: syncCode || null
       })
 
     if (error) throw error

@@ -50,11 +50,11 @@ export async function getCurrentSubscription() {
 }
 
 // Subscription + schedule'ı Netlify'a kaydet
-export async function saveScheduleToServer(subscription, times) {
+export async function saveScheduleToServer(subscription, times, syncCode = null) {
   const res = await fetch('/api/save-schedule', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription, times })
+    body: JSON.stringify({ subscription, times, syncCode })
   })
   if (!res.ok) throw new Error('Sunucuya kaydedilemedi')
   return res.json()

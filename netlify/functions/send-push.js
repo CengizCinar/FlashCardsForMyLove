@@ -80,8 +80,17 @@ export default async (req, context) => {
         }
       }
 
+      // Kullanıcıya özel kartları filtrele
+      const userCards = sub.user_code ? cards.filter(c => c.user_code === sub.user_code) : cards
+      
+      if (userCards.length === 0) {
+        console.log(`No cards found for user ${sub.user_code || 'default'}. Skipping...`)
+        skipped.push(`${sub.id.slice(0,8)}: no cards`)
+        continue
+      }
+
       // Kartlar arasından rastgele birini seç
-      const randomCard = cards[Math.floor(Math.random() * cards.length)]
+      const randomCard = userCards[Math.floor(Math.random() * userCards.length)]
 
       // %50 ihtimalle Türkçe ya da Hollandaca sor
       const askFront = Math.random() > 0.5

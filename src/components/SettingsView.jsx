@@ -41,7 +41,7 @@ export default function SettingsView() {
         // Aç — burada iOS izin penceresi çıkar
         const subscription = await requestPermissionAndSubscribe()
         const subJson = JSON.parse(JSON.stringify(subscription))
-        await saveScheduleToServer(subJson, settings.notificationTimes)
+        await saveScheduleToServer(subJson, settings.notificationTimes, settings.syncCode)
         await save({ notificationEnabled: true, pushSubscription: subJson })
         showMsg('Bildirimler açıldı! ✓')
       }
@@ -65,7 +65,7 @@ export default function SettingsView() {
     const times = [...new Set([...settings.notificationTimes, t])].sort()
     await save({ notificationTimes: times })
     if (settings.notificationEnabled && settings.pushSubscription) {
-      await saveScheduleToServer(settings.pushSubscription, times).catch(() => { })
+      await saveScheduleToServer(settings.pushSubscription, times, settings.syncCode).catch(() => { })
     }
   }
 
@@ -73,7 +73,7 @@ export default function SettingsView() {
     const times = settings.notificationTimes.filter(x => x !== t)
     await save({ notificationTimes: times })
     if (settings.notificationEnabled && settings.pushSubscription) {
-      await saveScheduleToServer(settings.pushSubscription, times).catch(() => { })
+      await saveScheduleToServer(settings.pushSubscription, times, settings.syncCode).catch(() => { })
     }
   }
 
