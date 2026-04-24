@@ -18,8 +18,14 @@ export async function getSettings() {
       notificationEnabled: false,
       notificationTimes: ['09:00', '19:00'],
       pushSubscription: null,
-      dailyGoal: 20
+      dailyGoal: 20,
+      syncCode: crypto.randomUUID().split('-')[0] // 8 haneli kod
     }
+    await db.settings.put(s)
+  }
+  // Mevcut kullanıcılarda syncCode yoksa ekle
+  if (!s.syncCode) {
+    s.syncCode = crypto.randomUUID().split('-')[0]
     await db.settings.put(s)
   }
   return s
@@ -32,10 +38,12 @@ export async function saveSettings(patch) {
 
 // ── Kart CRUD ──────────────────────────────────────────────────────────────
 export async function addCard({ front, back, language = 'nl-tr' }) {
+  const s = await getSettings()
+  
   // 1. Supabase'e gönder
   const { error } = await supabase
     .from('cards')
-    .insert([{ front: front.trim(), back: back.trim(), language }])
+    .insert([{ front: front.trim(), back: back.trim(), language, user_code: s.syncCode }])
 
   if (error) console.error("Supabase'e kayıt hatası:", error)
 
@@ -80,4 +88,45 @@ export async function getCardCount() {
 export async function getDueCount() {
   const cards = await getDueCards()
   return cards.length
+}
+
+// ── Bulut Senkronizasyonu ──────────────────────────────────────────────────
+export async function pullCardsFromCloud(code) {
+  if (!code) throw new Error('Geçersiz kod')
+  
+  // Buluttaki kelimeleri çek
+  const { data: cloudCards, error } = await supabase
+    .from('cards')
+    .select('*')
+    .eq('user_code', code.trim())
+    
+  if (error) throw new Error('Buluttan okuma hatası: ' + error.message)
+  if (!cloudCards || cloudCards.length === 0) return 0
+  
+  // Mevcut yerel kartları al (çiftleri engellemek için)
+  const localCards = await db.cards.toArray()
+  const localMap = new Set(localCards.map(c => `${c.front.toLowerCase()}-${c.back.toLowerCase()}`))
+  
+  let addedCount = 0
+  const now = new Date().toISOString()
+  
+  for (const cc of cloudCards) {
+    const key = `${cc.front.toLowerCase()}-${cc.back.toLowerCase()}`
+    if (!localMap.has(key)) {
+      await db.cards.add({
+        front: cc.front,
+        back: cc.back,
+        language: cc.language || 'nl-tr',
+        nextReview: now,
+        interval: 0,
+        easeFactor: 2.5,
+        repetitions: 0,
+        totalReviews: 0,
+        createdAt: cc.createdAt || now
+      })
+      addedCount++
+    }
+  }
+  
+  return addedCount
 }

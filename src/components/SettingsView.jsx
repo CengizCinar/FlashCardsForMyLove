@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getSettings, saveSettings } from '../modules/db.js'
+import { getSettings, saveSettings, pullCardsFromCloud } from '../modules/db.js'
 import { requestPermissionAndSubscribe, unsubscribePush, getCurrentSubscription, saveScheduleToServer } from '../modules/notifications.js'
 
 export default function SettingsView() {
@@ -8,6 +8,8 @@ export default function SettingsView() {
   const [msg, setMsg] = useState('')
   const [msgType, setMsgType] = useState('green')
   const [notifLoading, setNotifLoading] = useState(false)
+  const [syncInput, setSyncInput] = useState('')
+  const [syncLoading, setSyncLoading] = useState(false)
 
   useEffect(() => {
     getSettings().then(setSettings)
@@ -72,6 +74,43 @@ export default function SettingsView() {
     await save({ notificationTimes: times })
     if (settings.notificationEnabled && settings.pushSubscription) {
       await saveScheduleToServer(settings.pushSubscription, times).catch(() => { })
+    }
+  }
+
+  const handlePullCloud = async () => {
+    if (!syncInput.trim()) return showMsg('Lütfen bir kod girin', 'red')
+    setSyncLoading(true)
+    try {
+      const added = await pullCardsFromCloud(syncInput)
+      showMsg(added > 0 ? `${added} yeni kelime eklendi ✓` : 'Yeni kelime bulunamadı.')
+      if (added > 0) {
+        // Yeni kodumuz yapalım ki bundan sonraki kelimeler de o havuza gitsin
+        await save({ syncCode: syncInput.trim() })
+      }
+      setSyncInput('')
+    } catch (err) {
+      showMsg(err.message, 'red')
+    }
+    setSyncLoading(false)
+  }
+
+  const handleExport = async () => {
+    try {
+      const { getAllCards } = await import('../modules/db.js')
+      const cards = await getAllCards()
+      if (cards.length === 0) return showMsg('Dışa aktarılacak kelime yok', 'red')
+      
+      const text = cards.map(c => `${c.front}\t${c.back}`).join('\n')
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `kelimelerim_${new Date().toISOString().slice(0,10)}.txt`
+      a.click()
+      URL.revokeObjectURL(url)
+      showMsg('Dosya indirildi ✓')
+    } catch (err) {
+      showMsg('Hata: ' + err.message, 'red')
     }
   }
 
@@ -175,12 +214,67 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {/* Veri */}
+      {/* Yedekleme & Senkronizasyon */}
+      <div className="settings-section">
+        <h3>Yedekleme & Senkronizasyon</h3>
+        
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--ink-muted)', marginBottom: 4 }}>Senkronizasyon Kodun</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input 
+              className="input" 
+              readOnly 
+              value={settings.syncCode || ''} 
+              style={{ flex: 1, fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--ink)' }} 
+            />
+            <button 
+              className="btn btn-ghost" 
+              onClick={() => {
+                navigator.clipboard.writeText(settings.syncCode)
+                showMsg('Kod kopyalandı!')
+              }}
+            >
+              Kopyala
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
+            Cihaz değiştirdiğinde bu kodu kullanarak kelimelerini geri getirebilirsin.
+          </p>
+        </div>
+
+        <div style={{ padding: '12px', background: 'var(--cream)', borderRadius: 12 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Eski Kelimeleri Geri Getir</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="input"
+              placeholder="Örn: f47ac10b"
+              value={syncInput}
+              onChange={e => setSyncInput(e.target.value)}
+              style={{ flex: 1, fontFamily: 'monospace' }}
+            />
+            <button 
+              className="btn btn-primary" 
+              onClick={handlePullCloud}
+              disabled={syncLoading || !syncInput.trim()}
+            >
+              {syncLoading ? 'İndiriliyor...' : 'İndir'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="settings-section">
         <h3>Veri</h3>
         <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 12 }}>
-          Tüm veriler sadece bu cihazda, çevrimdışı saklanır.
+          Lokal verilerinizi yönetin.
         </p>
+        <button
+          className="btn btn-ghost"
+          style={{ width: '100%', marginBottom: 12, border: '1.5px solid #ddd' }}
+          onClick={handleExport}
+        >
+          Kelimeleri Dosya Olarak İndir (.txt)
+        </button>
         <button
           className="btn btn-danger"
           onClick={async () => {
