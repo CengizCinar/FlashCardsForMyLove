@@ -1,14 +1,29 @@
-// Kullanıcının subscription ve bildirim saatlerini Blobs'a kaydet
-const { getStore } = require('@netlify/blobs')
+import { getStore } from '@netlify/blobs'
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return { statusCode: 405 }
+export default async (req, context) => {
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405 })
+  }
 
-  const { subscription, times } = JSON.parse(event.body || '{}')
-  if (!subscription || !times) return { statusCode: 400, body: 'Missing fields' }
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return new Response('Invalid JSON', { status: 400 })
+  }
+
+  const { subscription, times } = body
+  if (!subscription || !times) {
+    return new Response('Missing fields', { status: 400 })
+  }
 
   const store = getStore('flashcard-settings')
   await store.setJSON('user-settings', { subscription, times })
 
-  return { statusCode: 200, body: JSON.stringify({ ok: true }) }
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  })
 }
+
+export const config = { path: '/api/save-schedule' }
