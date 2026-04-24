@@ -129,7 +129,7 @@ export default function SettingsView() {
       <div className="settings-section">
         <h3>Çalışma hedefi</h3>
         <div className="field" style={{ marginBottom: 0 }}>
-          <label>Günlük maksimum kart</label>
+          <label>Günlük maksimum kelime</label>
           <input
             className="input"
             type="number"
