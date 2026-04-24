@@ -19,13 +19,12 @@ export async function getSettings() {
       notificationTimes: ['09:00', '19:00'],
       pushSubscription: null,
       dailyGoal: 20,
-      syncCode: crypto.randomUUID().split('-')[0] // 8 haneli kod
+      syncCode: Math.random().toString(36).substring(2, 10) // 8 haneli kod
     }
     await db.settings.put(s)
   }
-  // Mevcut kullanıcılarda syncCode yoksa ekle
   if (!s.syncCode) {
-    s.syncCode = crypto.randomUUID().split('-')[0]
+    s.syncCode = Math.random().toString(36).substring(2, 10)
     await db.settings.put(s)
   }
   return s

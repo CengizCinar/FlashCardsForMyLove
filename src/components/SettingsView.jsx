@@ -230,9 +230,11 @@ export default function SettingsView() {
             <button 
               className="btn btn-ghost" 
               onClick={() => {
+                if (!settings.syncCode) return
                 navigator.clipboard.writeText(settings.syncCode)
                 showMsg('Kod kopyalandı!')
               }}
+              style={{ width: 'auto', padding: '13px 20px' }}
             >
               Kopyala
             </button>
@@ -265,6 +267,7 @@ export default function SettingsView() {
               className="btn btn-primary" 
               onClick={handlePullCloud}
               disabled={syncLoading || !syncInput.trim()}
+              style={{ width: 'auto', padding: '13px 20px' }}
             >
               {syncLoading ? 'İndiriliyor...' : 'İndir'}
             </button>
